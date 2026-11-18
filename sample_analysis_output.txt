@@ -1,0 +1,80 @@
+PART 1  Illustrative SFR example (assumed parameters, not results)
+fleet_MW  flexible_MW  nadir_Hz  RoCoF_Hz_per_s(500ms)  UFLS_stages  nadir_without_UFLS_Hz
+       0            0    49.209    -0.877            1    49.062
+      50           10    49.216    -0.863            1    49.093
+     500          100    49.330    -0.735            0    49.330
+    1500          300    49.732    -0.455            0    49.732
+
+PART 2  Power for the H2 decision rule (pre-registered secondary test), difference model
+        d = mean + day + seed + scenario(day) + residual, where d is the paired nadir difference (mHz)
+        between the proposed controller and B5 in the same scenario with the same seed,
+        over the stressed stratum: 15 days x 6 scenarios = 90 scenarios
+Decision rule: 95% interval wholly above 20 mHz = supported; spanning 20 = inconclusive; wholly below = not supported
+DUMMY variance components (mHz): day, seed, scenario, residual
+components          SE   mean half-width  true diff for 'supported' at 90%  true diff for 'not supported' at 90%
+(4, 5, 15, 10)      2.49       5.1             28.4                             11.6
+(8, 5, 15, 10)      3.06       6.3             30.6                              9.5
+(16, 5, 15, 10)     4.71       9.7             36.1                              3.8
+(8, 10, 15, 10)     4.11       8.5             34.1                              6.1
+(16, 10, 15, 10)    5.45      11.2             38.6                              1.5
+outcome probabilities for components (8, 5, 15, 10): true difference -> supported / inconclusive / not supported
+    0 mHz -> 0.00 / 0.00 / 1.00
+   10 mHz -> 0.00 / 0.13 / 0.87
+   15 mHz -> 0.00 / 0.66 / 0.34
+   20 mHz -> 0.02 / 0.95 / 0.03
+   25 mHz -> 0.35 / 0.65 / 0.00
+   30 mHz -> 0.87 / 0.13 / 0.00
+   40 mHz -> 1.00 / 0.00 / 0.00
+A true difference equal to the margin is inconclusive about 95% of the time at ANY sample size (property of the rule).
+What sample size sets is the band in which the verdict is probably inconclusive:
+  15 days, 10 seeds, components (8, 5, 15, 10): band 9.6 to 30.5 mHz; mean half-width 6.3 mHz
+  15 days, 10 seeds, components (16, 10, 15, 10): band 1.5 to 38.7 mHz; mean half-width 11.2 mHz
+  25 days, 15 seeds, components (8, 5, 15, 10): band 12.0 to 27.9 mHz; mean half-width 4.8 mHz
+  25 days, 15 seeds, components (16, 10, 15, 10): band 5.5 to 34.4 mHz; mean half-width 8.7 mHz
+rule of three, 1000 Latin-hypercube scenarios: 0.0030
+RUN LEDGER
+ base plan:
+    75600  core, 540 scenarios x 7 controllers x 10 seeds x 2 networks
+    10800  core at the strictest accepted thresholds, P and B5, Qatar model (540 x 2 x 10)
+    10240  temperature sweep, reference sizing (640 conditions x 2 preparations x 8 bisection steps)
+    10240  temperature sweep at the strictest accepted thresholds (640 x 2 x 8)
+    28160  battery size and hold time: 11 further combinations of 10/15/30-min battery and 30-s/5/15/30-min hold (16 temperatures x 20 days x 11 x 8)
+    25600  chiller-model uncertainty: 10 Latin-hypercube draws of chiller parameters (16 x 20 x 10 x 8)
+     2560  liquid-cooled case: warm-water loop (ASHRAE W32), reference sizing, rule-based preparation (16 x 20 x 8)
+     7680  oscillation sweep (32 cases x 6 conditions x 10 seeds x 4 comparators)
+     5760  delay and noise (18 scenarios x 8 off-nominal settings x 10 seeds x 4 controllers)
+    10000  safety sample (1,000 scenarios x 10 seeds)
+     2160  fault injection (6 x 18 x 10 x 2)
+     4860  pilot (15 days x 36 scenarios x 3 controllers x 3 realisations)
+   193660  total, 3562 core-hours (56 h on 64 cores); x10 margin 35615 core-hours (23.2 days on 64 cores)
+ optional extensions:
+    16200  transfer test: Qatar-trained P, B4, B6 run unchanged on the benchmark (540 x 3 x 10)
+    51200  learned preparation in the temperature sweep (640 x 10 seeds x 8)
+     3600  curtailed-solar response, P and B5, Qatar model, 6,000 MW level (180 x 2 x 10)
+    71000  total, 922 core-hours (14 h on 64 cores); x10 margin 9217 core-hours (6.0 days on 64 cores)
+ conditional additions:
+    21600  GPU-only variant if a participant refuses battery discharge (540 x 2 x 10 x 2)
+    37800  second must-run bound on the Qatar model if no list is supplied (540 x 7 x 10)
+    59400  total, 1485 core-hours (23 h on 64 cores); x10 margin 14850 core-hours (9.7 days on 64 cores)
+ training: 60 runs (3 learned variants, P, B4 and B6, x 10 seeds x 2 networks, each trained from scratch) at 12 h on 1 GPU + 32 CPU cores: 720 GPU-hours, 23040 core-hours; CPU-bound
+ test runs + training: 26602 core-hours (17.3 days on 64 cores); x10 test runs: 58655 core-hours (38.2 days)
+
+PART 3  Planned reporting format on DUMMY paired nadir differences (mHz)
+        generated from the difference model (15 days x 10 seeds x 6 stressed-stratum scenarios) and analysed with it
+comparison (proposed minus)   mean_diff_mHz  95%CI_mHz        r_rb    p_Holm   reading
+B5 tuned rule-based              11.6      [   5.4,  17.8]    0.84      n/a   H2 not supported
+B2 L0 only                       36.4      [  31.0,  41.9]    1.00  1.08e-11   secondary
+B3 L0+L1                         12.3      [   5.2,  19.5]    0.80  0.00399   secondary
+B4 L0+L1+MARL no shield          -5.0      [ -15.0,   5.1]   -0.31     0.32   secondary
+
+PART 4  Cohen's kappa on DUMMY double-coded interview segments (n=60, 5 codes)
+observed agreement=0.917 expected=0.207 kappa=0.895
+
+PART 5  Variance pilot on DUMMY paired differences of two non-learned controllers
+        (15 days x 36 scenarios x 3 noise realisations; true day SD = 8 mHz)
+day SD estimate=10.5 mHz  90% interval=[7.7, 12.3]
+mean half-width of the 95% interval at estimate: 7.3 mHz; 'supported' at 90% needs a true difference of 32.1 mHz (seed SD assumed 5 mHz until policies are trained)
+mean half-width of the 95% interval at upper end: 8.0 mHz; 'supported' at 90% needs a true difference of 33.1 mHz (seed SD assumed 5 mHz until policies are trained)
+pilot rule: enlarge the design (days up to 25, seeds up to 15) if the mean half-width at the upper end exceeds 10 mHz
+
+Dummy data written to ./dummy_data/ (6 CSV files). All values are synthetic.

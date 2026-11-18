@@ -1,0 +1,5 @@
+comparison_proposed_minus,mean_diff_mHz,ci95_low,ci95_high,rank_biserial,p_Holm,reading
+B5 tuned rule-based,11.6,5.4,17.8,0.84,n/a,H2 not supported
+B2 L0 only,36.4,31.0,41.9,1.00,1.08e-11,secondary
+B3 L0+L1,12.3,5.2,19.5,0.80,0.00399,secondary
+B4 L0+L1+MARL no shield,-5.0,-15.0,5.1,-0.31,0.32,secondary
