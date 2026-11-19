@@ -43,10 +43,11 @@ RUN LEDGER
      2560  liquid-cooled case: warm-water loop (ASHRAE W32), reference sizing, rule-based preparation (16 x 20 x 8)
      7680  oscillation sweep (32 cases x 6 conditions x 10 seeds x 4 comparators)
      5760  delay and noise (18 scenarios x 8 off-nominal settings x 10 seeds x 4 controllers)
+     1440  GPU capping dead time of 300 ms and 1 s (18 scenarios x 2 settings x 10 seeds x 4 controllers)
     10000  safety sample (1,000 scenarios x 10 seeds)
      2160  fault injection (6 x 18 x 10 x 2)
      4860  pilot (15 days x 36 scenarios x 3 controllers x 3 realisations)
-   193660  total, 3562 core-hours (56 h on 64 cores); x10 margin 35615 core-hours (23.2 days on 64 cores)
+   195100  total, 3598 core-hours (56 h on 64 cores); x10 margin 35975 core-hours (23.4 days on 64 cores)
  optional extensions:
     16200  transfer test: Qatar-trained P, B4, B6 run unchanged on the benchmark (540 x 3 x 10)
     51200  learned preparation in the temperature sweep (640 x 10 seeds x 8)
@@ -57,7 +58,7 @@ RUN LEDGER
     37800  second must-run bound on the Qatar model if no list is supplied (540 x 7 x 10)
     59400  total, 1485 core-hours (23 h on 64 cores); x10 margin 14850 core-hours (9.7 days on 64 cores)
  training: 60 runs (3 learned variants, P, B4 and B6, x 10 seeds x 2 networks, each trained from scratch) at 12 h on 1 GPU + 32 CPU cores: 720 GPU-hours, 23040 core-hours; CPU-bound
- test runs + training: 26602 core-hours (17.3 days on 64 cores); x10 test runs: 58655 core-hours (38.2 days)
+ test runs + training: 26638 core-hours (17.3 days on 64 cores); x10 test runs: 59015 core-hours (38.4 days)
 
 PART 3  Planned reporting format on DUMMY paired nadir differences (mHz)
         generated from the difference model (15 days x 10 seeds x 6 stressed-stratum scenarios) and analysed with it
