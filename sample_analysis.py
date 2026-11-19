@@ -196,6 +196,7 @@ base = [  # (label, runs, seconds per run)
     ("liquid-cooled case: warm-water loop (ASHRAE W32), reference sizing, rule-based preparation (16 x 20 x 8)", 16 * 20 * bisect, 30),
     ("oscillation sweep (32 cases x 6 conditions x 10 seeds x 4 comparators)", 32 * 6 * 10 * 4, 90),
     ("delay and noise (18 scenarios x 8 off-nominal settings x 10 seeds x 4 controllers)", 18 * 8 * 10 * 4, 90),
+    ("GPU capping dead time of 300 ms and 1 s (18 scenarios x 2 settings x 10 seeds x 4 controllers)", 18 * 2 * 10 * 4, 90),
     ("safety sample (1,000 scenarios x 10 seeds)", 10000, 90),
     ("fault injection (6 x 18 x 10 x 2)", 6 * 18 * 10 * 2, 90),
     ("pilot (15 days x 36 scenarios x 3 controllers x 3 realisations)", 15 * 36 * 3 * 3, 90),
