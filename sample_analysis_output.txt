@@ -29,36 +29,42 @@ A true difference equal to the margin is inconclusive about 95% of the time at A
 What sample size sets is the band in which the verdict is probably inconclusive:
   15 days, 10 seeds, components (8, 5, 15, 10): band 9.6 to 30.5 mHz; mean half-width 6.3 mHz
   15 days, 10 seeds, components (16, 10, 15, 10): band 1.5 to 38.7 mHz; mean half-width 11.2 mHz
-  25 days, 15 seeds, components (8, 5, 15, 10): band 12.0 to 27.9 mHz; mean half-width 4.8 mHz
-  25 days, 15 seeds, components (16, 10, 15, 10): band 5.5 to 34.4 mHz; mean half-width 8.7 mHz
+  24 days, 15 seeds, components (8, 5, 15, 10): band 11.8 to 28.2 mHz; mean half-width 4.9 mHz
+  24 days, 15 seeds, components (16, 10, 15, 10): band 5.6 to 34.6 mHz; mean half-width 8.8 mHz
 rule of three, 1000 Latin-hypercube scenarios: 0.0030
 RUN LEDGER
  base plan:
-    75600  core, 540 scenarios x 7 controllers x 10 seeds x 2 networks
+    64800  core, 540 scenarios x 6 controllers (P, B1 to B5) x 10 seeds x 2 networks
     10800  core at the strictest accepted thresholds, P and B5, Qatar model (540 x 2 x 10)
-    10240  temperature sweep, reference sizing (640 conditions x 2 preparations x 8 bisection steps)
+    10240  temperature sweep, reference sizing: 50 C design ambient, redundant unit held (640 conditions x 2 preparations x 8 bisection steps)
     10240  temperature sweep at the strictest accepted thresholds (640 x 2 x 8)
-    28160  battery size and hold time: 11 further combinations of 10/15/30-min battery and 30-s/5/15/30-min hold (16 temperatures x 20 days x 11 x 8)
+    38400  battery size and hold time: 15 further combinations of 5/10/15/30-min battery and 30-s/5/15/30-min hold (16 temperatures x 20 days x 15 x 8)
     25600  chiller-model uncertainty: 10 Latin-hypercube draws of chiller parameters (16 x 20 x 10 x 8)
+    12800  chiller design margin: 5 further sizings (design ambient 46/50/52 C x redundant unit held or used), conditioned room, rule-based preparation (16 x 20 x 5 x 8)
+    30720  recovery window of 30 and 120 min at all 6 sizings (16 x 20 x 6 x 2 x 8)
      2560  liquid-cooled case: warm-water loop (ASHRAE W32), reference sizing, rule-based preparation (16 x 20 x 8)
-     7680  oscillation sweep (32 cases x 6 conditions x 10 seeds x 4 comparators)
-     5760  delay and noise (18 scenarios x 8 off-nominal settings x 10 seeds x 4 controllers)
+     5760  delay and noise (18 stressed scenarios: 1 day per season x 3 solar x 2 fleets; x 8 off-nominal settings x 10 seeds x 4 controllers)
      1440  GPU capping dead time of 300 ms and 1 s (18 scenarios x 2 settings x 10 seeds x 4 controllers)
+     3600  UPS response time constant of 20 and 300 ms, P and B5, stressed stratum (90 scenarios x 2 x 10 seeds x 2)
     10000  safety sample (1,000 scenarios x 10 seeds)
-     2160  fault injection (6 x 18 x 10 x 2)
-     4860  pilot (15 days x 36 scenarios x 3 controllers x 3 realisations)
-   195100  total, 3598 core-hours (56 h on 64 cores); x10 margin 35975 core-hours (23.4 days on 64 cores)
+     2160  fault injection (6 failure types x the same 18 scenarios x 10 seeds x 2 controllers)
+     4860  pilot (15 days x 36 scenarios x 3 controllers x 3 workload seeds)
+      450  seed-variance check: P, first 5 training seeds, 90 stressed scenarios (90 x 5)
+   234430  total, 3685 core-hours (58 h on 64 cores); x10 margin 36848 core-hours (24.0 days on 64 cores)
  optional extensions:
-    16200  transfer test: Qatar-trained P, B4, B6 run unchanged on the benchmark (540 x 3 x 10)
-    51200  learned preparation in the temperature sweep (640 x 10 seeds x 8)
-     3600  curtailed-solar response, P and B5, Qatar model, 6,000 MW level (180 x 2 x 10)
-    71000  total, 922 core-hours (14 h on 64 cores); x10 margin 9217 core-hours (6.0 days on 64 cores)
+     3600  E1 curtailed-solar response, P and B5, Qatar model, 6,000 MW level (180 x 2 x 10)
+    51200  E2 learned preparation in the temperature sweep (640 x 10 seeds x 8)
+    10800  E4 transfer test: Qatar-trained P and B4 run unchanged on the benchmark (540 x 2 x 10)
+    10800  E5 centralised agent B6, core scenarios on both networks (540 x 10 x 2); runs first if time allows
+    76400  total, 1057 core-hours (17 h on 64 cores); x10 margin 10567 core-hours (6.9 days on 64 cores)
  conditional additions:
     21600  GPU-only variant if a participant refuses battery discharge (540 x 2 x 10 x 2)
-    37800  second must-run bound on the Qatar model if no list is supplied (540 x 7 x 10)
-    59400  total, 1485 core-hours (23 h on 64 cores); x10 margin 14850 core-hours (9.7 days on 64 cores)
- training: 60 runs (3 learned variants, P, B4 and B6, x 10 seeds x 2 networks, each trained from scratch) at 12 h on 1 GPU + 32 CPU cores: 720 GPU-hours, 23040 core-hours; CPU-bound
- test runs + training: 26638 core-hours (17.3 days on 64 cores); x10 test runs: 59015 core-hours (38.4 days)
+    32400  second must-run bound on the Qatar model if no list is supplied (540 x 6 x 10)
+    54000  total, 1350 core-hours (21 h on 64 cores); x10 margin 13500 core-hours (8.8 days on 64 cores)
+ training: 40 runs (2 learned variants, P and B4, x 10 seeds x 2 networks, each trained from scratch) at 12 h on 1 GPU + 32 CPU cores: 480 GPU-hours, 15360 core-hours; CPU-bound
+ E5 adds 240 GPU-hours of training: B6 x 10 seeds x 2 networks = 20 runs at 12 h (7680 core-hours)
+ base plan split: 103870 grid runs (90 s) and 130560 facility runs (30 s)
+ test runs + training: 19045 core-hours (12.4 days on 64 cores); x10 test runs: 52208 core-hours (34.0 days)
 
 PART 3  Planned reporting format on DUMMY paired nadir differences (mHz)
         generated from the difference model (15 days x 10 seeds x 6 stressed-stratum scenarios) and analysed with it
@@ -72,10 +78,10 @@ PART 4  Cohen's kappa on DUMMY double-coded interview segments (n=60, 5 codes)
 observed agreement=0.917 expected=0.207 kappa=0.895
 
 PART 5  Variance pilot on DUMMY paired differences of two non-learned controllers
-        (15 days x 36 scenarios x 3 noise realisations; true day SD = 8 mHz)
+        (15 days x 36 scenarios x 3 workload seeds; true day SD = 8 mHz)
 day SD estimate=10.5 mHz  90% interval=[7.7, 12.3]
 mean half-width of the 95% interval at estimate: 7.3 mHz; 'supported' at 90% needs a true difference of 32.1 mHz (seed SD assumed 5 mHz until policies are trained)
 mean half-width of the 95% interval at upper end: 8.0 mHz; 'supported' at 90% needs a true difference of 33.1 mHz (seed SD assumed 5 mHz until policies are trained)
-pilot rule: enlarge the design (days up to 25, seeds up to 15) if the mean half-width at the upper end exceeds 10 mHz
+pilot rule: enlarge the design (days up to 24, eight per season; seeds up to 15) if the mean half-width at the upper end exceeds 10 mHz
 
 Dummy data written to ./dummy_data/ (6 CSV files). All values are synthetic.

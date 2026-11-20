@@ -172,7 +172,7 @@ print("A true difference equal to the margin is inconclusive about 95% of the ti
 print("What sample size sets is the band in which the verdict is probably inconclusive:")
 _rng_main = rng
 rng = np.random.default_rng(11)
-for (d_, s_n) in ((15, 10), (25, 15)):
+for (d_, s_n) in ((15, 10), (24, 15)):
     D, S = d_, s_n
     for comp in ((8, 5, 15, 10), (16, 10, 15, 10)):
         g_, h_ = sim_intervals(*comp)
@@ -186,29 +186,34 @@ print(f"rule of three, 1000 Latin-hypercube scenarios: {3/1000:.4f}")
 cond_T = 16 * 20 * 2
 bisect = 8                                   # bisection steps per value: resolution 1/256 of rated IT load
 base = [  # (label, runs, seconds per run)
-    ("core, 540 scenarios x 7 controllers x 10 seeds x 2 networks", 540 * 7 * 10 * 2, 90),
+    ("core, 540 scenarios x 6 controllers (P, B1 to B5) x 10 seeds x 2 networks", 540 * 6 * 10 * 2, 90),
     ("core at the strictest accepted thresholds, P and B5, Qatar model (540 x 2 x 10)", 540 * 2 * 10, 90),
-    ("temperature sweep, reference sizing (640 conditions x 2 preparations x 8 bisection steps)", cond_T * 2 * bisect, 30),
+    ("temperature sweep, reference sizing: 50 C design ambient, redundant unit held (640 conditions x 2 preparations x 8 bisection steps)", cond_T * 2 * bisect, 30),
     ("temperature sweep at the strictest accepted thresholds (640 x 2 x 8)", cond_T * 2 * bisect, 30),
-    ("battery size and hold time: 11 further combinations of 10/15/30-min battery and 30-s/5/15/30-min hold "
-     "(16 temperatures x 20 days x 11 x 8)", 16 * 20 * 11 * bisect, 30),
+    ("battery size and hold time: 15 further combinations of 5/10/15/30-min battery and 30-s/5/15/30-min hold "
+     "(16 temperatures x 20 days x 15 x 8)", 16 * 20 * 15 * bisect, 30),
     ("chiller-model uncertainty: 10 Latin-hypercube draws of chiller parameters (16 x 20 x 10 x 8)", 16 * 20 * 10 * bisect, 30),
+    ("chiller design margin: 5 further sizings (design ambient 46/50/52 C x redundant unit held or used), "
+     "conditioned room, rule-based preparation (16 x 20 x 5 x 8)", 16 * 20 * 5 * bisect, 30),
+    ("recovery window of 30 and 120 min at all 6 sizings (16 x 20 x 6 x 2 x 8)", 16 * 20 * 6 * 2 * bisect, 30),
     ("liquid-cooled case: warm-water loop (ASHRAE W32), reference sizing, rule-based preparation (16 x 20 x 8)", 16 * 20 * bisect, 30),
-    ("oscillation sweep (32 cases x 6 conditions x 10 seeds x 4 comparators)", 32 * 6 * 10 * 4, 90),
-    ("delay and noise (18 scenarios x 8 off-nominal settings x 10 seeds x 4 controllers)", 18 * 8 * 10 * 4, 90),
+    ("delay and noise (18 stressed scenarios: 1 day per season x 3 solar x 2 fleets; x 8 off-nominal settings x 10 seeds x 4 controllers)", 18 * 8 * 10 * 4, 90),
     ("GPU capping dead time of 300 ms and 1 s (18 scenarios x 2 settings x 10 seeds x 4 controllers)", 18 * 2 * 10 * 4, 90),
+    ("UPS response time constant of 20 and 300 ms, P and B5, stressed stratum (90 scenarios x 2 x 10 seeds x 2)", 90 * 2 * 10 * 2, 90),
     ("safety sample (1,000 scenarios x 10 seeds)", 10000, 90),
-    ("fault injection (6 x 18 x 10 x 2)", 6 * 18 * 10 * 2, 90),
-    ("pilot (15 days x 36 scenarios x 3 controllers x 3 realisations)", 15 * 36 * 3 * 3, 90),
+    ("fault injection (6 failure types x the same 18 scenarios x 10 seeds x 2 controllers)", 6 * 18 * 10 * 2, 90),
+    ("pilot (15 days x 36 scenarios x 3 controllers x 3 workload seeds)", 15 * 36 * 3 * 3, 90),
+    ("seed-variance check: P, first 5 training seeds, 90 stressed scenarios (90 x 5)", 90 * 5, 90),
 ]
-optional = [
-    ("transfer test: Qatar-trained P, B4, B6 run unchanged on the benchmark (540 x 3 x 10)", 540 * 3 * 10, 90),
-    ("learned preparation in the temperature sweep (640 x 10 seeds x 8)", cond_T * 10 * bisect, 30),
-    ("curtailed-solar response, P and B5, Qatar model, 6,000 MW level (180 x 2 x 10)", 180 * 2 * 10, 90),
+optional = [  # E3 (a verified gain set per fleet size) is a stability check and adds no test runs
+    ("E1 curtailed-solar response, P and B5, Qatar model, 6,000 MW level (180 x 2 x 10)", 180 * 2 * 10, 90),
+    ("E2 learned preparation in the temperature sweep (640 x 10 seeds x 8)", cond_T * 10 * bisect, 30),
+    ("E4 transfer test: Qatar-trained P and B4 run unchanged on the benchmark (540 x 2 x 10)", 540 * 2 * 10, 90),
+    ("E5 centralised agent B6, core scenarios on both networks (540 x 10 x 2); runs first if time allows", 540 * 10 * 2, 90),
 ]
 conditional = [
     ("GPU-only variant if a participant refuses battery discharge (540 x 2 x 10 x 2)", 540 * 2 * 10 * 2, 90),
-    ("second must-run bound on the Qatar model if no list is supplied (540 x 7 x 10)", 540 * 7 * 10, 90),
+    ("second must-run bound on the Qatar model if no list is supplied (540 x 6 x 10)", 540 * 6 * 10, 90),
 ]
 print("RUN LEDGER")
 for title, rows in (("base plan", base), ("optional extensions", optional), ("conditional additions", conditional)):
@@ -219,11 +224,17 @@ for title, rows in (("base plan", base), ("optional extensions", optional), ("co
         print(f"  {n_:7d}  {lab}")
     print(f"  {tot:7d}  total, {hrs:.0f} core-hours ({hrs/64:.0f} h on 64 cores); x10 margin {hrs*10:.0f} core-hours "
           f"({hrs*10/64/24:.1f} days on 64 cores)")
-print(f" training: 60 runs (3 learned variants, P, B4 and B6, x 10 seeds x 2 networks, each trained from scratch) "
-      f"at 12 h on 1 GPU + 32 CPU cores: {60*12} GPU-hours, {60*12*32} core-hours; CPU-bound")
+N_TRAIN = 2 * 10 * 2                         # learned variants P and B4 x 10 seeds x 2 networks
+print(f" training: {N_TRAIN} runs (2 learned variants, P and B4, x 10 seeds x 2 networks, each trained from scratch) "
+      f"at 12 h on 1 GPU + 32 CPU cores: {N_TRAIN*12} GPU-hours, {N_TRAIN*12*32} core-hours; CPU-bound")
 test_hrs = sum(r[1] * r[2] for r in base) / 3600
-print(f" test runs + training: {test_hrs + 60*12*32:.0f} core-hours ({(test_hrs + 60*12*32)/64/24:.1f} days on 64 cores); "
-      f"x10 test runs: {test_hrs*10 + 60*12*32:.0f} core-hours ({(test_hrs*10 + 60*12*32)/64/24:.1f} days)")
+print(f" E5 adds {20*12} GPU-hours of training: B6 x 10 seeds x 2 networks = 20 runs at 12 h ({20*12*32} core-hours)")
+tr_hrs = N_TRAIN * 12 * 32
+grid_runs = sum(r[1] for r in base if r[2] == 90)
+fac_runs = sum(r[1] for r in base if r[2] == 30)
+print(f" base plan split: {grid_runs} grid runs (90 s) and {fac_runs} facility runs (30 s)")
+print(f" test runs + training: {test_hrs + tr_hrs:.0f} core-hours ({(test_hrs + tr_hrs)/64/24:.1f} days on 64 cores); "
+      f"x10 test runs: {test_hrs*10 + tr_hrs:.0f} core-hours ({(test_hrs*10 + tr_hrs)/64/24:.1f} days)")
 
 # ---------------------------------------------------------------- Part 3
 print("\nPART 3  Planned reporting format on DUMMY paired nadir differences (mHz)")
@@ -259,7 +270,7 @@ for name, (delta, *comp) in dummy.items():
     p = 2 * stats.t.sf(abs(gm / se), df)
     pvals.append(p)
     out.append((name, gm, gm - hw_, gm + hw_, rank_biserial(y.ravel())))
-# H2 (B5) is decided by the interval rule of Table 3 and is not in the Holm family;
+# H2 (B5) is decided by the interval rule of Table 2 and is not in the Holm family;
 # Holm is applied to the secondary comparisons only.
 sec = [i for i, o in enumerate(out) if not o[0].startswith("B5")]
 holm = {}
@@ -290,7 +301,7 @@ print(f"observed agreement={po:.3f} expected={pe:.3f} kappa={(po-pe)/(1-pe):.3f}
 
 # ---------------------------------------------------------------- Part 5
 print("\nPART 5  Variance pilot on DUMMY paired differences of two non-learned controllers")
-print("        (15 days x 36 scenarios x 3 noise realisations; true day SD = 8 mHz)")
+print("        (15 days x 36 scenarios x 3 workload seeds; true day SD = 8 mHz)")
 n_day, n_scn, n_rep = 15, 36, 3
 yy = (12.0 + 8.0 * rng.standard_normal((n_day, 1, 1)) + 15.0 * rng.standard_normal((n_day, n_scn, 1))
       + 10.0 * rng.standard_normal((n_day, n_scn, n_rep))).mean(axis=2)          # day x scenario means
@@ -311,7 +322,7 @@ for lab, sd in (("estimate", est), ("upper end", hi)):
     g_, h_ = sim_intervals(sd, 5, 15, 10, reps=2000)
     print(f"mean half-width of the 95% interval at {lab}: {h_.mean():.1f} mHz; 'supported' at 90% needs a true difference of "
           f"{SESOI + np.quantile(h_ - g_, 0.90):.1f} mHz (seed SD assumed 5 mHz until policies are trained)")
-print("pilot rule: enlarge the design (days up to 25, seeds up to 15) if the mean half-width at the upper end exceeds 10 mHz")
+print("pilot rule: enlarge the design (days up to 24, eight per season; seeds up to 15) if the mean half-width at the upper end exceeds 10 mHz")
 
 # ---------------------------------------------------------------- Export of the dummy data
 # Writes every dataset generated above to CSV. No random numbers are drawn here,
